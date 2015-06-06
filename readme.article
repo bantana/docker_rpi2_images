@@ -56,7 +56,9 @@ cd rootfs/rpi2_ssh
 
 create container mygo
 
-  docker create --name mygo rpi2_ssh
+  docker create --name mygo -h mygo rpi2_ssh
+
+create a container name is "mygo" and set the hostname "mygo".
 
 list container
 

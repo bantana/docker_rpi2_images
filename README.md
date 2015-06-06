@@ -2,15 +2,15 @@
 
 - raspbian docker images create
 
-  README.md
-  rootfs
-  ├── rpi2_base
-  │   ├── Dockerfile
-  │   ├── mkimage-raspbian.sh
-  │   └── tar.sh
-  └── rpi2_ssh
-      ├── Dockerfile
-      └── authorized_keys
+>  README.md
+>  rootfs
+>  ├── rpi2_base
+>  │   ├── Dockerfile
+>  │   ├── mkimage-raspbian.sh
+>  │   └── tar.sh
+>  └── rpi2_ssh
+>      ├── Dockerfile
+>      └── authorized_keys
   
 - first
 

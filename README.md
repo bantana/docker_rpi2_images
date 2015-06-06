@@ -1,8 +1,6 @@
-# docker rpi2 images
+# Create docker images on the raspberry pi2.
 
-Create docker images on the raspberry pi2.
-
-* raspbian docker images create
+- raspbian docker images create
 
   README.md
   rootfs

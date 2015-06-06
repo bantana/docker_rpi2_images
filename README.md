@@ -2,15 +2,23 @@
 
 - raspbian docker images create
 
->  README.md
->  rootfs
->  ├── rpi2_base
->  │   ├── Dockerfile
->  │   ├── mkimage-raspbian.sh
->  │   └── tar.sh
->  └── rpi2_ssh
->      ├── Dockerfile
->      └── authorized_keys
+  README.md
+
+  rootfs
+
+  ├── rpi2_base
+
+  │   ├── Dockerfile
+
+  │   ├── mkimage-raspbian.sh
+
+  │   └── tar.sh
+
+  └── rpi2_ssh
+
+      ├── Dockerfile
+
+      └── authorized_keys
   
 - first
 
@@ -19,6 +27,7 @@
 - second
 
   sudo chroot raspbian
+
   dkg-reconfigure locales
   
   choice No. 138 en_US.UTF-8 encoding

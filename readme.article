@@ -1,10 +1,9 @@
-# docker rpi2 images
+docker images on the raspbian
+5 jun 2015
+Tags: docker, rpi
 
-Create docker images on the raspberry pi2.
+* raspbian docker images 
 
-* raspbian docker images create
-
-  README.md
   rootfs
   ├── rpi2_base
   │   ├── Dockerfile
@@ -13,22 +12,108 @@ Create docker images on the raspberry pi2.
   └── rpi2_ssh
       ├── Dockerfile
       └── authorized_keys
-  
-- first
+
+
+* first create rpi2_base image
+
+  cd rootfs/rpi2_base
 
   sudo mkimages-raspbian.sh
 
-- second
-
   sudo chroot raspbian
   dkg-reconfigure locales
-  
-  choice No. 138 en_US.UTF-8 encoding
 
-- third
+choice No. 138 en_US.UTF-8 encoding
 
- sudo tar.sh
+  sudo tar.sh
 
-- build images
+build images
 
   docker build -t rpi2_base .
+
+check the images
+
+  $ docker images 
+  REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+  rpi2_base           latest              8c4318c15012        About an hour ago   129.3 MB
+
+* create rpi2_ssh image from rpi2_base image
+
+cd rootfs/rpi2_ssh
+
+  cat $your_id_rsa.pub > authorized_keys
+
+  docker build -t rpi2_ssh .
+
+* show docker images
+
+  $ docker images 
+  REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+  rpi2_ssh            latest              b574bbf92302        About an hour ago   162.7 MB
+  rpi2_base           latest              8c4318c15012        About an hour ago   129.3 MB
+
+* create container from image
+
+create container mygo
+
+  docker create --name mygo rpi2_ssh
+
+list container
+
+  $ docker ps -a
+  CONTAINER ID        IMAGE               COMMAND               CREATED             STATUS              PORTS               NAMES
+  6d7939ca75cd        rpi2_ssh:latest     "/usr/sbin/sshd -D"   About an hour ago   Up About an hour    22/tcp              mygo
+
+list running container
+
+  $ docker ps
+  CONTAINER ID        IMAGE               COMMAND               CREATED             STATUS              PORTS               NAMES
+
+starting  the container mygo
+  
+  $ docker start mygo
+  mygo
+
+list running container
+
+  $ docker ps
+  CONTAINER ID        IMAGE               COMMAND               CREATED             STATUS              PORTS               NAMES
+  6d7939ca75cd        rpi2_ssh:latest     "/usr/sbin/sshd -D"   About an hour ago   Up 2 seconds        22/tcp              mygo 
+  
+exec command on the running container mygo
+
+  $ docker exec mygo ip addr
+  1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN 
+      link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+      inet 127.0.0.1/8 scope host lo
+         valid_lft forever preferred_lft forever
+      inet6 ::1/128 scope host 
+         valid_lft forever preferred_lft forever
+  34: eth0: <BROADCAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP 
+      link/ether 02:42:ac:11:00:10 brd ff:ff:ff:ff:ff:ff
+      inet 172.17.0.16/16 scope global eth0
+         valid_lft forever preferred_lft forever
+      inet6 fe80::42:acff:fe11:10/64 scope link 
+         valid_lft forever preferred_lft forever
+  
+stop the running container mygo
+
+  $ docker stop mygo
+
+remove the container mygo
+
+  $ docker rm mygo
+
+  with -f force option
+
+  $ docker rm -f mygo
+
+remove the rpi2_ssh image
+
+  $ docker rmi rpi2_base
+
+  with -f force option
+  
+  $ docker rmi -f rpi2_base
+
+

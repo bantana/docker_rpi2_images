@@ -9,7 +9,8 @@ RUN apt-get install -y sudo openssh-server
 RUN  /etc/init.d/ssh start
 RUN useradd pi -G sudo -s /bin/bash -m
 RUN echo 'pi:raspberry' | chpasswd
-RUN echo 'pi ALL=(ALL) NOPASSWD: ALL'>/etc/sudoers
+ADD sudoers /etc/sudoers
+RUN chown root:root /etc/sudoers && chmod 440 /etc/sudoers
 RUN mkdir -p /home/pi/.ssh
 ADD authorized_keys /home/pi/.ssh/authorized_keys
 RUN chown -R pi:pi /home/pi/.ssh; chmod 700 /home/pi/.ssh

@@ -71,7 +71,7 @@ list running container
   $ docker ps
   CONTAINER ID        IMAGE               COMMAND               CREATED             STATUS              PORTS               NAMES
 
-starting  the container mygo
+* starting  the container mygo
   
   $ docker start mygo
   mygo
@@ -82,7 +82,7 @@ list running container
   CONTAINER ID        IMAGE               COMMAND               CREATED             STATUS              PORTS               NAMES
   6d7939ca75cd        rpi2_ssh:latest     "/usr/sbin/sshd -D"   About an hour ago   Up 2 seconds        22/tcp              mygo 
   
-exec command on the running container mygo
+* exec command on the running container mygo
 
   $ docker exec mygo ip addr
   1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN 
@@ -98,11 +98,11 @@ exec command on the running container mygo
       inet6 fe80::42:acff:fe11:10/64 scope link 
          valid_lft forever preferred_lft forever
   
-stop the running container mygo
+* stop the running container mygo
 
   $ docker stop mygo
 
-remove the container mygo
+* remove the container mygo
 
   $ docker rm mygo
 
@@ -110,7 +110,7 @@ remove the container mygo
 
   $ docker rm -f mygo
 
-remove the rpi2_ssh image
+* remove the rpi2_ssh image
 
   $ docker rmi rpi2_base
 
@@ -118,6 +118,104 @@ remove the rpi2_ssh image
   
   $ docker rmi -f rpi2_base
 
-create a new image from container
+* create a new image from container
 
   $ docker commit $container_name_or_id $new_image_name
+
+* default docker daemon listen unix socket
+  
+  DOCKER_OPTS="-H unix:///var/run/docker.sock"
+
+* run docker daemon listen http
+
+/etc/default/docker file
+
+  DOCKER_OPTS="-H 0.0.0.0:2375"
+
+on remote docker client controller
+
+  $ docker -H $docker_Daemon_IP:2375 ps -a
+
+* run docker daemon listen unix socket and http
+
+  DOCKER_OPTS="-H unix:///var/run/docker.sock -H 0.0.0.0:2375"
+
+* run docker daemon listen https
+
+/etc/default/docker file
+
+  DOCKER_OPTS="--tlsverify --tlscacert=/home/pi/.docker/ca.pem \
+      --tlscert=/home/pi/.docker/server-cert.pem \
+      --tlskey=/home/pi/.docker/server-key.pem -H 0.0.0.0:2375"
+
+* create files for docker https support 
+  
+[[https://docs.docker.com/articles/https/][docker office document link]]
+
+  $ mkdir $HOME/.docker
+  $ cd $HOME/.docker
+
+- First generate CA private and public keys:
+
+  $ openssl genrsa -aes256 -out ca-key.pem 4096
+  ...
+  Common Name (e.g. server FQDN or YOUR name) []:$HOST
+
+- create a server key and certificate signing request (CSR)
+
+  $ openssl genrsa -out server-key.pem 4096 
+
+my server ip is 192.168.88.18
+
+  /* $ openssl req -subj "/CN=$HOST" -sha256 -new -key server-key.pem -out server.csr */
+  $ openssl req -subj "/CN=192.168.88.18" -sha256 -new -key server-key.pem -out server.csr
+
+- sign the public key with our CA
+
+  $ echo subjectAltName = IP:192.168.88.18,IP:127.0.0.1 > extfile.cnf
+
+  $ openssl x509 -req -days 365 -sha256 -in server.csr -CA ca.pem -CAkey ca-key.pem \
+  -CAcreateserial -out server-cert.pem -extfile extfile.cnf
+
+- For client authentication, create a client key and certificate signing request:
+
+  $ openssl genrsa -out key.pem 4096
+  $ openssl req -subj '/CN=bantana' -new -key key.pem -out bantana.csr
+
+- To make the key suitable for client authentication, create an extensions config file:
+
+  $ echo extendedKeyUsage = clientAuth > bantana.extfile.cnf
+  
+- Now sign the public key:
+
+  $ openssl x509 -req -days 365 -sha256 -in bantana.csr -CA ca.pem -CAkey ca-key.pem \
+     -CAcreateserial -out cert.pem -extfile bantana.extfile.cnf
+
+- After generating cert.pem and server-cert.pem you can safely remove the two certificate signing requests:
+  
+  $ rm -v bantana.csr server.csr
+
+- secure the file
+
+  $ chmod -v 0400 ca-key.pem key.pem server-key.pem
+
+  $ chmod -v 0444 ca.pem server-cert.pem cert.pem
+
+* https remote access from client
+
+  $ mkdir -pv ~/.docker
+  $ cp -v {ca,cert,key}.pem ~/.docker
+  $ export DOCKER_HOST=tcp://$HOST:2376 DOCKER_TLS_VERIFY=1
+  $ docker ps
+
+or on my mac
+
+  $ brew install docker
+  $ alias rd='/usr/local/bin/docker --tlsverify -H 192.168.88.18:2375'  
+  $ rd images
+  23:02 $ rd images
+  REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+  rpi2_go             latest              abbc5c5fc428        8 hours ago         331.7 MB
+  redis               latest              d749f44db668        24 hours ago        173.2 MB
+  rpi2_ssh            latest              1a48c6ddeaf8        37 hours ago        162.7 MB
+  rpi2_base           latest              8c4318c15012        2 days ago          129.3 MB

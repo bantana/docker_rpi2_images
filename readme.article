@@ -118,4 +118,6 @@ remove the rpi2_ssh image
   
   $ docker rmi -f rpi2_base
 
+create a new image from container
 
+  $ docker commit $container_name_or_id $new_image_name

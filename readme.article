@@ -2,7 +2,7 @@ docker images on the raspbian
 5 jun 2015
 Tags: docker, rpi
 
-* raspbian docker images 
+* raspbian docker images
 
   rootfs
   ├── rpi2_base
@@ -33,7 +33,7 @@ build images
 
 check the images
 
-  $ docker images 
+  $ docker images
   REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
   rpi2_base           latest              8c4318c15012        About an hour ago   129.3 MB
 
@@ -47,7 +47,7 @@ cd rootfs/rpi2_ssh
 
 * show docker images
 
-  $ docker images 
+  $ docker images
   REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
   rpi2_ssh            latest              b574bbf92302        About an hour ago   162.7 MB
   rpi2_base           latest              8c4318c15012        About an hour ago   129.3 MB
@@ -72,7 +72,7 @@ list running container
   CONTAINER ID        IMAGE               COMMAND               CREATED             STATUS              PORTS               NAMES
 
 * starting  the container mygo
-  
+
   $ docker start mygo
   mygo
 
@@ -80,24 +80,24 @@ list running container
 
   $ docker ps
   CONTAINER ID        IMAGE               COMMAND               CREATED             STATUS              PORTS               NAMES
-  6d7939ca75cd        rpi2_ssh:latest     "/usr/sbin/sshd -D"   About an hour ago   Up 2 seconds        22/tcp              mygo 
-  
+  6d7939ca75cd        rpi2_ssh:latest     "/usr/sbin/sshd -D"   About an hour ago   Up 2 seconds        22/tcp              mygo
+
 * exec command on the running container mygo
 
   $ docker exec mygo ip addr
-  1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN 
+  1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN
       link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
       inet 127.0.0.1/8 scope host lo
          valid_lft forever preferred_lft forever
-      inet6 ::1/128 scope host 
+      inet6 ::1/128 scope host
          valid_lft forever preferred_lft forever
-  34: eth0: <BROADCAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP 
+  34: eth0: <BROADCAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP
       link/ether 02:42:ac:11:00:10 brd ff:ff:ff:ff:ff:ff
       inet 172.17.0.16/16 scope global eth0
          valid_lft forever preferred_lft forever
-      inet6 fe80::42:acff:fe11:10/64 scope link 
+      inet6 fe80::42:acff:fe11:10/64 scope link
          valid_lft forever preferred_lft forever
-  
+
 * stop the running container mygo
 
   $ docker stop mygo
@@ -115,7 +115,7 @@ list running container
   $ docker rmi rpi2_base
 
   with -f force option
-  
+
   $ docker rmi -f rpi2_base
 
 * create a new image from container
@@ -123,7 +123,7 @@ list running container
   $ docker commit $container_name_or_id $new_image_name
 
 * default docker daemon listen unix socket
-  
+
   DOCKER_OPTS="-H unix:///var/run/docker.sock"
 
 * run docker daemon listen http
@@ -148,8 +148,8 @@ on remote docker client controller
       --tlscert=/home/pi/.docker/server-cert.pem \
       --tlskey=/home/pi/.docker/server-key.pem -H 0.0.0.0:2375"
 
-* create files for docker https support 
-  
+* create files for docker https support
+
 [[https://docs.docker.com/articles/https/][docker office document link]]
 
   $ mkdir $HOME/.docker
@@ -163,7 +163,7 @@ on remote docker client controller
 
 - create a server key and certificate signing request (CSR)
 
-  $ openssl genrsa -out server-key.pem 4096 
+  $ openssl genrsa -out server-key.pem 4096
 
 my server ip is 192.168.88.18
 
@@ -185,14 +185,14 @@ my server ip is 192.168.88.18
 - To make the key suitable for client authentication, create an extensions config file:
 
   $ echo extendedKeyUsage = clientAuth > bantana.extfile.cnf
-  
+
 - Now sign the public key:
 
   $ openssl x509 -req -days 365 -sha256 -in bantana.csr -CA ca.pem -CAkey ca-key.pem \
      -CAcreateserial -out cert.pem -extfile bantana.extfile.cnf
 
 - After generating cert.pem and server-cert.pem you can safely remove the two certificate signing requests:
-  
+
   $ rm -v bantana.csr server.csr
 
 - secure the file
@@ -211,7 +211,7 @@ my server ip is 192.168.88.18
 or on my mac
 
   $ brew install docker
-  $ alias rd='/usr/local/bin/docker --tlsverify -H 192.168.88.18:2375'  
+  $ alias rd='/usr/local/bin/docker --tlsverify -H 192.168.88.18:2375'
   $ rd images
   23:02 $ rd images
   REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
@@ -219,3 +219,36 @@ or on my mac
   redis               latest              d749f44db668        24 hours ago        173.2 MB
   rpi2_ssh            latest              1a48c6ddeaf8        37 hours ago        162.7 MB
   rpi2_base           latest              8c4318c15012        2 days ago          129.3 MB
+
+* bridge
+
+  $ sudo apt-get install bridge-utils
+
+cat /etc/network/interface
+
+  auto lo br0
+  iface lo inet loopback
+
+  allow-hotplug eth0
+
+  # change eth0 to manual when bridge to br0
+  iface eth0 inet manual
+
+  # Bridge setup
+  iface br0 inet static
+  address 192.168.88.51
+  network 192.168.88.0
+  netmask 255.255.255.0
+  broadcast 192.168.88.255
+  gateway 192.168.88.1
+          bridge_ports eth0
+
+
+  allow-hotplug wlan0
+  iface wlan0 inet dhcp
+  wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+  iface default inet dhcp
+
+cat /etc/default/docker
+
+  DOCKER_OPTS="-b=br0 --fixed-cidr=192.168.88.240/28 --dns 8.8.8.8 --dns 8.8.4.4 -H unix:///var/run/docker.sock -H 0.0.0.0:2375 --storage-driver=overlay -D"
